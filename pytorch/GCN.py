@@ -27,6 +27,7 @@ class GCN(nn.Module):
 class ChannelAttention(nn.Module):
     """
     Channel-wise attention module, implemented of CBAM
+    Add sigmoid out of this module.
     """
     def __init__(self, channel, reduction=2):
         super(ChannelAttention, self).__init__()
