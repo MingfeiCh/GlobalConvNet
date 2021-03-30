@@ -1,6 +1,9 @@
 import torch.nn as nn
 
 class GCN(nn.Module):
+    """
+    Global Convolution Network which can be regarded as Spatial-wise attention.
+    """
     def __init__(self, in_channels, out_channels, k=3, padding=1):
         super(GCN, self).__init__()
 
@@ -21,5 +24,31 @@ class GCN(nn.Module):
 
         return out
 
+class ChannelAttention(nn.Module):
+    """
+    Channel-wise attention module, implemented of CBAM
+    """
+    def __init__(self, channel, reduction=2):
+        super(ChannelAttention, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+
+        self.fc1 = nn.Conv2d(channel, channel // reduction, 1, bias=False)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Conv2d(channel // reduction, channel, 1, bias=False)
+
+    def forward(self, x):
+        avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+        max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
+        out = avg_out + max_out
+        return out
+
 if __name__ == '__main__':
-    pass
+    import torch
+    in_x = torch.rand([2, 32, 10, 10], dtype=torch.float)
+    gcn = GCN(32, 1, 9, 4)
+    ca = ChannelAttention(32, 2)
+    gcn_x = gcn(in_x)
+    print(gcn_x.shape)
+    ca_x = ca(in_x)
+    print(ca_x.shape)
